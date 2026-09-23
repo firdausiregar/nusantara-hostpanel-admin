@@ -1,0 +1,15 @@
+'use strict';
+const express=require('express');
+const rateLimit=require('express-rate-limit');
+const {requirePlatformAdmin}=require('../../middleware/auth');
+const c=require('./settings.controller');
+const r=express.Router();
+const sensitive=rateLimit({windowMs:15*60*1000,limit:8,standardHeaders:'draft-8',legacyHeaders:false});
+r.use(requirePlatformAdmin);
+r.get('/',c.index);
+r.post('/password',sensitive,c.password);
+r.post('/database/rotate',sensitive,c.rotateDatabase);
+r.post('/phpmyadmin/control-repair',sensitive,c.pmaRepair);
+r.post('/phpmyadmin/rotate',sensitive,c.pmaRotate);
+r.post('/audit',sensitive,c.securityAudit);
+module.exports=r;

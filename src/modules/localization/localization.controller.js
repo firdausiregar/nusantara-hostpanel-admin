@@ -1,0 +1,1 @@
+'use strict';const service=require('./localization.service');function update(req,res){const locale=service.setLocale(req.session.user.id,req.body.locale);req.session.user.locale=locale;let back='/';try{const u=new URL(String(req.get('referer')||''));if(u.host===req.get('host'))back=`${u.pathname}${u.search}`;}catch{}res.redirect(back);}module.exports={update};

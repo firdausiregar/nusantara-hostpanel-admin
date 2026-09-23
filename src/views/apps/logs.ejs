@@ -1,0 +1,7 @@
+<%- include('../partials/app-start') %>
+<section class="card p-5 sm:p-6">
+  <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><h2 class="font-bold">Logs · <%= app.name %></h2><p class="mt-1 text-sm text-slate-500"><%= app.service_name %> · 200 baris terakhir</p></div><a class="btn-secondary" href="/apps">Kembali</a></div>
+  <% if (logError) { %><div class="mt-5 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200"><%= logError %></div><% } %>
+  <pre class="mt-5 max-h-[65vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/30 p-4 text-xs leading-5 text-slate-300"><%= logs %></pre>
+</section>
+<%- include('../partials/app-end') %>

@@ -1,0 +1,1 @@
+'use strict';const service=require('./deployments.service');function index(req,res){res.render('deployments/index',{title:'Deployments',deployments:service.list(req.workspace.id,100)});}module.exports={index};

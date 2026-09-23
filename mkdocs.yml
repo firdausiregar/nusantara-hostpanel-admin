@@ -1,0 +1,52 @@
+site_name: Nusantara HostPanel Admin
+site_description: Security-first self-hosted Node.js SaaS/PaaS and hosting control plane.
+site_url: https://firdausiregar.github.io/nusantara-hostpanel-admin/
+repo_url: https://github.com/firdausiregar/nusantara-hostpanel-admin
+repo_name: firdausiregar/nusantara-hostpanel-admin
+edit_uri: edit/main/docs/
+theme:
+  name: material
+  language: id
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    scheme: slate
+    primary: black
+    accent: amber
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Install: user-guide/install.md
+      - Local Development: LOCAL-DEVELOPMENT.md
+      - New Project: user-guide/projects.md
+      - GitHub Deploy: user-guide/github-deploy.md
+      - Billing Midtrans: user-guide/billing-midtrans.md
+      - Multi-language: user-guide/localization.md
+      - Preview Environments: user-guide/previews.md
+  - Operations:
+      - Domains & Nginx: operator/domains.md
+      - DNS & SSL: operator/dns-ssl.md
+      - Backup & Restore: operator/backup-restore.md
+      - Monitoring & Alerts: operator/monitoring.md
+      - Disaster Recovery: operator/disaster-recovery.md
+  - Security:
+      - Security Guide: SECURITY.md
+      - Threat Model: THREAT-MODEL.md
+      - Architecture: ARCHITECTURE.md
+  - Developer:
+      - MVC Architecture: developer/mvc.md
+      - API / OpenAPI: developer/api.md
+      - Release Process: developer/release.md

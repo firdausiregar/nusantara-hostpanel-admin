@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Node dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-fund --no-audit
+          else
+            npm install --no-fund --no-audit
+          fi
+      - run: npm rebuild better-sqlite3
+      - run: pip install -r docs/requirements.txt
+      - name: Quality gate
+        run: |
+          npm run check
+          npm run test:security
+          npm run check:migrations
+          npm run smoke:local
+          npm run css:build
+          npm run check:assets
+          mkdocs build --strict
+          for f in scripts/*.sh; do bash -n "$f"; done
+          npm audit --omit=dev --audit-level=high
+      - name: Build source archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          NAME="nusantara-hostpanel-admin-v${VERSION}"
+          mkdir -p dist/stage
+          rsync -a ./ "dist/stage/${NAME}/" \
+            --exclude .git --exclude node_modules --exclude dist --exclude data --exclude .env --exclude .env.local
+          (cd dist/stage && zip -qr "../${NAME}.zip" "${NAME}")
+          tar -C dist/stage -czf "dist/${NAME}.tar.gz" "${NAME}"
+          (cd dist && sha256sum "${NAME}.zip" "${NAME}.tar.gz" > "${NAME}.sha256")
+          npm sbom --omit=dev --sbom-format=cyclonedx > "dist/${NAME}.sbom.cdx.json"
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*.sha256
+            dist/*.sbom.cdx.json

@@ -1,0 +1,1 @@
+'use strict';const express=require('express');const {requireAuth,requirePlatformAdmin}=require('../../middleware/auth');const c=require('./workspaces.controller');const r=express.Router();r.use(requireAuth);r.get('/',c.index);r.post('/',c.create);r.post('/:id/switch',c.switchWorkspace);r.post('/:id/policy',requirePlatformAdmin,c.policy);module.exports=r;

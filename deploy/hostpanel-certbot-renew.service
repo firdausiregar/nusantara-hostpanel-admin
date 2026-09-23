@@ -1,0 +1,8 @@
+[Unit]
+Description=Nusantara Host Panel - Renew Let's Encrypt certificates
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/certbot/bin/certbot renew --quiet

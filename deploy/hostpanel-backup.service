@@ -1,0 +1,11 @@
+[Unit]
+Description=HostPanel configuration and MariaDB backup
+
+[Service]
+Type=oneshot
+UMask=0077
+PrivateTmp=true
+ExecStart=/opt/hostpanel/scripts/backup.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

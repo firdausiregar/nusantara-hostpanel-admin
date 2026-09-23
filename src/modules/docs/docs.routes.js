@@ -1,0 +1,1 @@
+'use strict';const express=require('express');const {requireAuth}=require('../../middleware/auth');const {requireWorkspace}=require('../../core/security/workspace');const c=require('./docs.controller');const r=express.Router();r.use(requireAuth,requireWorkspace);r.get('/',c.index);module.exports=r;

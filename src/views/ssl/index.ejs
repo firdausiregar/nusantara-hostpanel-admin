@@ -1,0 +1,63 @@
+<%- include('../partials/app-start') %>
+<section class="card p-5 sm:p-6">
+  <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+    <div>
+      <h2 class="text-lg font-bold">SSL & Renewal</h2>
+      <p class="mt-1 text-sm text-slate-500">Kelola sertifikat panel, phpMyAdmin, dan domain aplikasi tanpa mencampur certificate name.</p>
+    </div>
+    <span class="badge">TLS: <%= tlsMode.toUpperCase() %></span>
+  </div>
+
+  <% if (tlsMode === 'edge') { %>
+    <div class="mt-5 rounded-xl border border-gold-400/20 bg-gold-400/[0.06] p-4 text-sm text-slate-300">TLS diterminasi oleh edge/provider. Renewal sertifikat lokal tidak dijalankan HostPanel.</div>
+  <% } else if (tlsMode === 'off') { %>
+    <div class="mt-5 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200">TLS_MODE=off. Aktifkan mode local atau edge untuk HTTPS.</div>
+  <% } else { %>
+    <% if (statusError) { %><div class="mt-5 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200"><%= statusError %></div><% } %>
+    <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">Renewal timer</div><div class="mt-2 font-bold"><%= status.timerActive === true ? 'ACTIVE' : status.timerActive === false ? 'INACTIVE' : 'UNKNOWN' %></div><div class="mt-1 text-xs text-slate-600"><%= status.timerName || '-' %></div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">Autostart</div><div class="mt-2 font-bold"><%= status.timerEnabled === true ? 'ENABLED' : status.timerEnabled === false ? 'DISABLED' : 'UNKNOWN' %></div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">Next run</div><div class="mt-2 text-sm font-semibold"><%= status.nextRun || '-' %></div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">Certbot</div><div class="mt-2 text-sm font-semibold"><%= status.certbotVersion || '-' %></div></div>
+    </div>
+    <div class="mt-5 flex flex-wrap gap-3">
+      <form method="post" action="/ssl/system-auto"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-primary" data-confirm="Panel akan mengecek ACME dan memasang SSL production untuk domain sistem yang dikonfigurasi. Lanjut?" type="submit">Auto SSL Panel + phpMyAdmin</button></form>
+      <form method="post" action="/ssl/dry-run"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Test Renewal (dry-run)</button></form>
+      <form method="post" action="/ssl/renew"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Cek/Renew Sekarang</button></form>
+    </div>
+  <% } %>
+</section>
+
+<% if (tlsMode === 'local' && systemTargets?.length) { %>
+<section class="mt-6">
+  <div class="mb-4"><h2 class="font-bold">Domain sistem</h2><p class="mt-1 text-sm text-slate-500">Panel admin dan phpMyAdmin sekarang dikelola langsung dari menu SSL, bukan bootstrap script terpisah.</p></div>
+  <div class="grid gap-4 lg:grid-cols-2">
+    <% systemTargets.forEach(target => { const cert = target.certificate; %>
+      <article class="card p-5">
+        <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+          <div><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold"><%= target.label %></h3><span class="badge"><%= cert ? 'HTTPS' : 'BELUM SSL' %></span></div><div class="mt-2 text-sm text-slate-500"><%= target.domain %></div><% if (cert) { %><div class="mt-2 text-xs text-slate-600">Cert: <%= cert.name %> · Expired: <%= cert.expiresAt %> · <%= cert.daysRemaining %> hari<% if ((cert.domains || []).some(n => n.startsWith('*.'))) { %> · wildcard<% } %></div><% if (cert.renewalAuto === false) { %><div class="mt-2 rounded-lg border border-amber-400/20 bg-amber-400/[0.06] px-3 py-2 text-xs text-amber-200">Renewal manual: sertifikat ini dibuat dengan DNS manual tanpa auth hook, jadi timer Certbot tidak dapat memperbaruinya otomatis.</div><% } %><% } %></div>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <form method="post" action="/ssl/system/<%= target.kind %>/preflight"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Tes ACME</button></form>
+          <form method="post" action="/ssl/system/<%= target.kind %>/staging"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Tes Staging</button></form>
+          <form method="post" action="/ssl/system/<%= target.kind %>/sync"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" title="Gunakan bila certificate dibuat manual via SSH" type="submit">Sinkronkan Manual</button></form>
+          <form method="post" action="/ssl/system/<%= target.kind %>/issue"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-primary" data-confirm="Pastikan DNS dan HTTP port 80 untuk <%= target.domain %> sudah menuju server ini. Lanjut?" type="submit"><%= cert ? 'Pastikan/Perbarui SSL' : 'Pasang SSL Otomatis' %></button></form>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (tlsMode === 'local') { %>
+<section class="mt-6">
+  <div class="mb-4"><h2 class="font-bold">Semua sertifikat</h2><p class="mt-1 text-sm text-slate-500">Sertifikat manual dan otomatis dibaca dari <code>/etc/letsencrypt/live</code>. Penerbitan satu domain tidak mengganti sertifikat domain lain.</p></div>
+  <div class="table-wrap"><table class="table"><thead><tr><th>Domain</th><th>Kedaluwarsa</th><th>Sisa</th><th>Status</th></tr></thead><tbody>
+    <% if (!status.certificates || !status.certificates.length) { %><tr><td colspan="4" class="text-slate-500">Belum ada sertifikat Certbot yang ditemukan.</td></tr><% } %>
+    <% (status.certificates || []).forEach(cert => { %>
+      <tr><td><div class="font-medium"><%= (cert.domains || []).join(', ') || cert.name %></div><div class="mt-1 text-xs text-slate-600">cert-name: <%= cert.name %></div><% if (cert.renewalAuto === false) { %><div class="mt-1 text-xs text-amber-300">DNS manual · tidak auto-renew</div><% } else if (cert.renewalAuthenticator) { %><div class="mt-1 text-xs text-slate-500">renew: <%= cert.renewalAuthenticator %></div><% } %></td><td><%= cert.expiresAt || '-' %></td><td><%= Number.isFinite(cert.daysRemaining) ? cert.daysRemaining + ' hari' : '-' %></td><td><span class="badge"><%= cert.daysRemaining <= 7 ? 'KRITIS' : cert.daysRemaining <= 30 ? 'RENEW SOON' : 'VALID' %></span></td></tr>
+    <% }) %>
+  </tbody></table></div>
+</section>
+<% } %>
+<%- include('../partials/app-end') %>

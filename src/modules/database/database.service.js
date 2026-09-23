@@ -1,0 +1,12 @@
+'use strict';const {run}=require('../../core/runtime');const model=require('./database.model');
+async function serverList(){return model.normalizeList(JSON.parse((await run('db-list',[],{timeout:30000})).stdout||'[]'));}
+async function list(ws,isPlatformAdmin=false){const all=await serverList();const resources=model.resources(ws);const by=new Map(all.map(x=>[x.name,x]));const managed=resources.map(r=>({...r,...(by.get(r.db_name)||{name:r.db_name,sizeBytes:0,users:[]})}));const assigned=new Set(resources.map(r=>r.db_name));return{managed,unassigned:isPlatformAdmin?all.filter(x=>!assigned.has(x.name)):[]};}
+async function create(ws,name,appId=null){const policy=model.workspace(ws);if(policy?.max_databases>0&&model.count(ws)>=policy.max_databases)throw new Error(`Quota database tercapai: maksimal ${policy.max_databases}.`);const result=JSON.parse((await run('db-create',[name],{timeout:30000})).stdout||'{}');model.add(ws,name,null,appId||null);return result;}
+async function adopt(ws,name){const all=await serverList();if(!all.some(x=>x.name===name))throw new Error('Database tidak ditemukan di MariaDB.');model.add(ws,name);}
+async function createUser(ws,database,user){if(!model.resourceByName(database,ws))throw new Error('Database bukan milik workspace aktif.');const out=JSON.parse((await run('db-user-create',[database,user],{timeout:30000})).stdout||'{}');model.updateUser(ws,database,user);return out;}
+async function rotateUser(ws,database){const r=model.resourceByName(database,ws);if(!r?.db_user)throw new Error('Database belum memiliki user managed.');return createUser(ws,database,r.db_user);}
+async function drop(ws,name){if(!model.resourceByName(name,ws))throw new Error('Database bukan milik workspace aktif.');const out=JSON.parse((await run('db-drop',[name,name],{timeout:30000})).stdout||'{}');model.remove(ws,name);return out;}
+async function dump(ws,name){if(!model.resourceByName(name,ws))throw new Error('Database bukan milik workspace aktif.');return JSON.parse((await run('db-dump',[name],{timeout:120000})).stdout||'{}');}
+async function dumps(ws,name){if(!model.resourceByName(name,ws))throw new Error('Database bukan milik workspace aktif.');return JSON.parse((await run('db-dump-list',[name],{timeout:30000})).stdout||'[]');}
+async function restore(ws,name,dump){if(!model.resourceByName(name,ws))throw new Error('Database bukan milik workspace aktif.');return JSON.parse((await run('db-dump-restore',[name,dump],{timeout:120000})).stdout||'{}');}
+module.exports={list,create,adopt,createUser,rotateUser,drop,dump,dumps,restore};

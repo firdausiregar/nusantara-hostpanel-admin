@@ -1,0 +1,19 @@
+/* Production shell overrides kept as plain CSS so mobile navigation remains functional even before a Tailwind rebuild. */
+.app-sidebar{width:min(88vw,19rem)}
+.mobile-safe-bottom{padding-bottom:max(1rem,env(safe-area-inset-bottom))}
+.sidebar-backdrop{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);transition:opacity .2s ease}
+.sidebar-backdrop.hidden{display:none}.sidebar-backdrop.opacity-0{opacity:0}.sidebar-backdrop.opacity-100{opacity:1}
+.nav-group-button{display:flex;width:100%;align-items:center;justify-content:space-between;border-radius:.5rem;padding:1.25rem .75rem .25rem;text-align:left;font-size:.625rem;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:rgb(71 85 105)}
+.nav-group-button:hover{color:rgb(148 163 184)}
+.project-source{cursor:pointer;border:1px solid rgba(255,255,255,.08);border-radius:1rem;background:rgba(255,255,255,.03);padding:1.25rem;text-align:left;transition:border-color .15s,background .15s,box-shadow .15s}
+.project-source:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.055)}
+.project-source-active{border-color:rgba(242,195,95,.5)!important;background:rgba(242,195,95,.08)!important;box-shadow:0 0 0 2px rgba(242,195,95,.1)}
+.repo-card{display:flex;width:100%;align-items:center;gap:.75rem;border:1px solid rgba(255,255,255,.08);border-radius:.75rem;background:rgba(0,0,0,.15);padding:.75rem;text-align:left;transition:border-color .15s,background .15s,box-shadow .15s}
+.repo-card:hover{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.05)}
+.repo-card-active{border-color:rgba(242,195,95,.5)!important;background:rgba(242,195,95,.08)!important;box-shadow:0 0 0 1px rgba(242,195,95,.2)}
+.mobile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid rgba(255,255,255,.08);background:rgba(7,9,13,.96);padding:.5rem .5rem max(.4rem,env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
+.mobile-bottom-link{display:flex;min-width:0;flex-direction:column;align-items:center;gap:.25rem;border-radius:.75rem;padding:.375rem .25rem;font-size:.625rem;font-weight:600;color:rgb(100 116 139)}
+.mobile-bottom-link-active{background:rgba(255,255,255,.06);color:#f9d98a}
+.mobile-bottom-icon{display:flex;height:1.75rem;width:1.75rem;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.08);border-radius:.5rem;background:rgba(255,255,255,.035);font-size:.5625rem;font-weight:900}
+@media (min-width:1024px){.app-sidebar{width:18rem}.sidebar-backdrop,.mobile-bottom-nav{display:none!important}}
+@media (max-width:639px){.table th,.table td{padding-left:.75rem!important;padding-right:.75rem!important}.metric-value{font-size:1.6rem!important;line-height:2rem!important}.btn-primary,.btn-secondary,.btn-danger{min-height:2.6rem}}

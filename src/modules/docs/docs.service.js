@@ -1,0 +1,1 @@
+'use strict';const config=require('../../core/config');function links(){return{docsUrl:config.docsUrl,repoUrl:config.repoUrl,readTheDocs:'https://readthedocs.org/',openapi:'/api/openapi.yaml'};}module.exports={links};

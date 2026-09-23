@@ -1,0 +1,10 @@
+  </div>
+</main>
+<nav class="mobile-bottom-nav" aria-label="Navigasi cepat mobile">
+  <% (mobileNav||[]).forEach(([href,icon,label])=>{ const active=href==='/'?currentPath==='/':currentPath.startsWith(href); %><a href="<%= href %>" class="mobile-bottom-link <%= active?'mobile-bottom-link-active':'' %>"><span class="mobile-bottom-icon"><%- iconSvg(icon,'h-4 w-4') %></span><span class="truncate"><%= label %></span></a><% }) %>
+  <button data-sidebar-toggle type="button" class="mobile-bottom-link" aria-expanded="false" aria-label="Buka semua menu"><span class="mobile-bottom-icon"><%- iconSvg('layers','h-4 w-4') %></span><span>Menu</span></button>
+</nav>
+<%- include('footer') %>
+<script src="/js/app.js?v=<%= release %>" defer></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+'use strict';
+const service=require('./workspaces.service');const audit=require('../../lib/audit');
+function index(req,res){res.render('workspaces/index',{title:'Workspaces',items:service.listForUser(req.session.user)});}
+function create(req,res){try{const id=service.create(req.session.user,req.body);req.session.workspaceId=id;audit(req,'workspace.create',String(id));req.flash('success','Workspace dibuat dan diaktifkan.');}catch(e){req.flash('error',e.message);}res.redirect('/workspaces');}
+function switchWorkspace(req,res){const ws=service.getForUser(Number(req.params.id),req.session.user);if(!ws)return res.status(403).render('error',{title:'Akses ditolak',error:'Workspace tidak tersedia untuk akun ini.'});if(ws.status==='suspended'&&req.session.user.role!=='admin')return res.status(403).render('error',{title:'Workspace ditangguhkan',error:'Workspace ini sedang ditangguhkan oleh administrator platform.'});req.session.workspaceId=ws.id;req.flash('success',`Workspace aktif: ${ws.name}`);res.redirect(req.get('referer')||'/');}
+function policy(req,res){try{service.updatePolicy(req.params.id,req.body);audit(req,'workspace.policy.update',String(req.params.id),`plan=${req.body.plan}; status=${req.body.status}`);req.flash('success','Plan, status, dan quota workspace diperbarui.');}catch(e){req.flash('error',e.message);}res.redirect('/workspaces');}
+module.exports={index,create,switchWorkspace,policy};

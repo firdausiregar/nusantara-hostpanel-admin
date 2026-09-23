@@ -1,0 +1,14 @@
+<header class="sticky top-0 z-20 border-b border-white/[0.07] bg-ink-950/88 backdrop-blur-xl lg:ml-72">
+  <div class="flex min-h-16 items-center justify-between gap-3 px-3 py-2 sm:px-6 lg:px-8">
+    <div class="flex min-w-0 items-center gap-2 sm:gap-3">
+      <button data-sidebar-toggle class="btn-secondary shrink-0 !p-2.5 lg:hidden" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Buka menu navigasi"><span aria-hidden="true">☰</span></button>
+      <div class="min-w-0"><h1 class="truncate text-sm font-bold text-white sm:text-base"><%= title %></h1><p class="hidden truncate text-xs text-slate-600 sm:block"><% if(permissions?.isPlatformAdmin){ %><%= platform === 'nat' ? 'NAT / Port Forward' : platform === 'proxy' ? 'Edge / Reverse Proxy' : 'Direct VPS' %> · TLS <%= tlsMode.toUpperCase() %> · <%= runtimeMode.toUpperCase() %><% } else { %><%= workspace?.name || 'Workspace' %> · <%= workspaceRole || 'member' %><%= workspace?.status && workspace.status!=='active' ? ' · '+workspace.status : '' %><% } %></p></div>
+    </div>
+    <div class="flex shrink-0 items-center gap-2">
+      <% if(permissions?.canDevelop && !permissions?.suspended){ %><a href="/apps/new" class="btn-primary hidden !px-3 !py-2 text-xs sm:inline-flex"><%- iconSvg('plus','h-4 w-4') %><span class="ml-1"><%= t('common.deploy','Deploy') %></span></a><% } %>
+      <form method="post" action="/locale" class="hidden sm:block"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><select class="field !h-9 !w-auto !py-1 text-xs" name="locale" onchange="this.form.submit()" aria-label="<%= t('common.language','Language') %>"><% supportedLocales.forEach(l=>{ %><option value="<%= l %>" <%= locale===l?'selected':'' %>><%= l==='id'?'ID · Indonesia':'EN · English' %></option><% }) %></select></form>
+      <a href="/notifications" class="btn-secondary relative !p-2.5" aria-label="Notifications"><%- iconSvg('bell','h-4 w-4') %><% if(unreadNotifications){ %><span class="absolute -right-1 -top-1 rounded-full bg-gold-400 px-1.5 py-0.5 text-[9px] font-black text-ink-950"><%= unreadNotifications>99?'99+':unreadNotifications %></span><% } %></a>
+      <% if(permissions?.isPlatformAdmin){ %><% if (localDevelopment) { %><span class="badge hidden border-cyan-400/20 bg-cyan-400/10 text-cyan-300 md:inline-flex">LOCAL</span><% } else { %><span class="badge-ok hidden md:inline-flex"><span class="mr-2 h-1.5 w-1.5 rounded-full bg-emerald-300"></span>Production</span><% } %><% } %>
+    </div>
+  </div>
+</header>

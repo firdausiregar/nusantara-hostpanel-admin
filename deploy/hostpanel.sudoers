@@ -1,0 +1,1 @@
+hostpanel ALL=(root) NOPASSWD: /usr/local/sbin/hostpanelctl *

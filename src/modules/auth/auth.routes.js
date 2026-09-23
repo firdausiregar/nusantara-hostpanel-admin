@@ -1,0 +1,3 @@
+'use strict';
+const express=require('express');const c=require('./auth.controller');const router=express.Router();
+router.get('/setup',c.setupPage);router.post('/setup',c.loginLimiter,c.setup);router.get('/login',c.loginPage);router.post('/login',c.loginLimiter,c.login);router.get('/forgot-password',c.forgotPage);router.post('/forgot-password',c.loginLimiter,c.forgot);router.get('/reset-password/:token',c.resetPage);router.post('/reset-password/:token',c.loginLimiter,c.reset);router.get('/login/2fa',c.twoFactorPage);router.post('/login/2fa',c.loginLimiter,c.twoFactor);router.post('/logout',c.logout);module.exports=router;

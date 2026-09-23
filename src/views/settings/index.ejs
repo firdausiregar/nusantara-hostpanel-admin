@@ -1,0 +1,65 @@
+<%- include('../partials/app-start') %>
+<section class="grid gap-6 xl:grid-cols-2">
+  <div class="card p-5 sm:p-6">
+    <div><h2 class="text-lg font-bold">Akun Administrator</h2><p class="mt-1 text-sm text-slate-500">Ubah password panel. Semua session aktif akan dibatalkan setelah perubahan.</p></div>
+    <div class="mt-5 rounded-xl border border-white/10 bg-black/10 p-4 text-sm"><div class="text-xs text-slate-500">Email</div><div class="mt-1 font-medium"><%= user.email %></div><div class="mt-3 text-xs text-slate-500">Login terakhir</div><div class="mt-1"><%= user.last_login_at || '-' %></div></div>
+    <form method="post" action="/settings/password" class="mt-5 space-y-4" autocomplete="off">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div><label class="label">Password saat ini</label><input class="field" type="password" name="current_password" autocomplete="current-password" required></div>
+      <div><label class="label">Password baru</label><input class="field" type="password" name="new_password" autocomplete="new-password" minlength="<%= minPasswordChars %>" required><p class="mt-1.5 text-xs text-slate-600">Minimal <%= minPasswordChars %> karakter, maksimal <%= maxPasswordBytes %> byte.</p></div>
+      <div><label class="label">Ulangi password baru</label><input class="field" type="password" name="confirm_password" autocomplete="new-password" required></div>
+      <button class="btn-primary" data-confirm="Ubah password panel dan keluarkan semua session aktif?" type="submit">Ubah Password Panel</button>
+    </form>
+  </div>
+
+  <div class="card p-5 sm:p-6">
+    <div><h2 class="text-lg font-bold">Database & phpMyAdmin</h2><p class="mt-1 text-sm text-slate-500">Kredensial sensitif tidak ditampilkan ulang. Rotasi menghasilkan password acak baru dan hanya ditampilkan sekali.</p></div>
+    <% if (credentialError) { %><div class="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200"><%= credentialError %></div><% } %>
+    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">MariaDB Host</div><div class="mt-1 font-semibold"><%= credentials.dbHost || 'localhost' %>:<%= credentials.dbPort || 3306 %></div><div class="mt-1 text-xs text-slate-600">Hanya lokal; port 3306 tidak perlu dibuka.</div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">Database Admin</div><div class="mt-1 font-semibold"><%= credentials.dbAdminUser || 'hostdbadmin' %></div><div class="mt-1 text-xs text-slate-600"><%= credentials.dbUserExists ? 'akun tersedia' : 'akun belum terdeteksi' %></div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">phpMyAdmin Basic Auth</div><div class="mt-1 font-semibold"><%= credentials.pmaBasicUser || 'pmaadmin' %></div><div class="mt-1 text-xs text-slate-600"><%= credentials.pmaBasicConfigured ? 'lapisan proteksi aktif' : 'credential file belum terdeteksi' %></div></div>
+      <div class="rounded-xl border border-white/10 p-4"><div class="text-xs text-slate-500">phpMyAdmin URL</div><div class="mt-1 break-all font-semibold"><%= phpMyAdminUrl || '-' %></div><% if (phpMyAdminUrl) { %><a class="mt-2 inline-block text-xs text-gold-400" target="_blank" rel="noopener noreferrer" href="<%= phpMyAdminUrl %>">Buka phpMyAdmin ↗</a><% } %></div>
+      <div class="rounded-xl border border-white/10 p-4 sm:col-span-2"><div class="text-xs text-slate-500">phpMyAdmin Controluser</div><div class="mt-1 font-semibold"><%= credentials.pmaControlUser || 'phpmyadmin' %> @ localhost</div><div class="mt-1 text-xs <%= credentials.pmaControlOk ? 'text-emerald-400' : 'text-red-300' %>"><%= credentials.pmaControlOk ? 'koneksi internal phpMyAdmin sehat' : 'koneksi controluser gagal / belum sinkron' %> · DB: <%= credentials.pmaControlDatabase || 'phpmyadmin' %></div></div>
+    </div>
+    <div class="mt-5 grid gap-4 lg:grid-cols-2">
+      <form method="post" action="/settings/database/rotate" class="rounded-xl border border-white/10 p-4">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="font-semibold">Rotasi password MariaDB</div><p class="mt-1 text-xs text-slate-500">Mengubah password <%= credentials.dbAdminUser || 'hostdbadmin' %>@localhost. Jangan gunakan akun admin ini di aplikasi. Buat user/database khusus aplikasi di phpMyAdmin. Jika ada konfigurasi lama yang memakai akun ini, perbarui setelah rotasi.</p>
+        <div class="mt-3"><label class="label">Konfirmasi password panel</label><input class="field" type="password" name="current_password" autocomplete="current-password" required></div>
+        <button class="btn-primary mt-3" data-confirm="Rotasi password database admin sekarang? Password baru hanya ditampilkan sekali." type="submit">Rotasi Password DB</button>
+      </form>
+      <form method="post" action="/settings/phpmyadmin/rotate" class="rounded-xl border border-white/10 p-4">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="font-semibold">Rotasi gerbang phpMyAdmin</div><p class="mt-1 text-xs text-slate-500">Mengganti password HTTP Basic Auth sebelum halaman login database.</p>
+        <div class="mt-3"><label class="label">Konfirmasi password panel</label><input class="field" type="password" name="current_password" autocomplete="current-password" required></div>
+        <button class="btn-secondary mt-3" data-confirm="Rotasi password Basic Auth phpMyAdmin sekarang?" type="submit">Rotasi Basic Auth</button>
+      </form>
+      <form method="post" action="/settings/phpmyadmin/control-repair" class="rounded-xl border border-white/10 p-4 lg:col-span-2">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="font-semibold">Perbaiki controluser phpMyAdmin</div><p class="mt-1 text-xs text-slate-500">Menyinkronkan akun internal phpMyAdmin dari /etc/phpmyadmin/config-db.php ke MariaDB. Password controluser tidak ditampilkan ke browser.</p>
+        <div class="mt-3 max-w-sm"><label class="label">Konfirmasi password panel</label><input class="field" type="password" name="current_password" autocomplete="current-password" required></div>
+        <button class="btn-secondary mt-3" data-confirm="Sinkronkan controluser internal phpMyAdmin sekarang?" type="submit">Perbaiki Controluser</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="card mt-6 p-5 sm:p-6">
+  <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+    <div><h2 class="text-lg font-bold">Security Audit</h2><p class="mt-1 text-sm text-slate-500">Pemeriksaan konfigurasi server tanpa menampilkan nilai rahasia.</p></div>
+    <div class="rounded-xl border border-white/10 px-4 py-3 text-center"><div class="text-xs text-slate-500">Skor</div><div class="text-2xl font-black"><%= Number.isFinite(auditReport.score) ? auditReport.score : 0 %>%</div></div>
+  </div>
+  <% if (auditError) { %><div class="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 p-4 text-sm text-red-200"><%= auditError %></div><% } %>
+  <div class="mt-5 table-wrap"><table class="table"><thead><tr><th>Kontrol</th><th>Status</th><th>Detail</th></tr></thead><tbody>
+    <% if (!auditReport.checks || !auditReport.checks.length) { %><tr><td colspan="3" class="text-slate-500">Audit belum tersedia.</td></tr><% } %>
+    <% (auditReport.checks || []).forEach(c => { %><tr><td class="font-medium"><%= c.label %></td><td><span class="badge"><%= String(c.status || 'unknown').toUpperCase() %></span></td><td class="text-xs text-slate-400"><%= c.detail || '-' %></td></tr><% }) %>
+  </tbody></table></div>
+  <form method="post" action="/settings/audit" class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="w-full max-w-sm"><label class="label">Password panel untuk audit ulang</label><input class="field" type="password" name="current_password" autocomplete="current-password" required></div>
+    <button class="btn-secondary" type="submit">Jalankan Audit Ulang</button>
+  </form>
+  <p class="mt-3 text-xs text-slate-600">Audit ini memeriksa hardening konfigurasi umum. Ia bukan pengganti penetration test atau audit independen.</p>
+</section>
+<%- include('../partials/app-end') %>

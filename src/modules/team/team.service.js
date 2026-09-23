@@ -1,0 +1,8 @@
+'use strict';
+const crypto=require('node:crypto');const bcrypt=require('bcryptjs');const model=require('./team.model');const {validatePassword}=require('../../lib/password-policy');
+function email(v){const x=String(v||'').trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(x)||x.length>254)throw new Error('Email tidak valid.');return x;}
+function role(v){const x=String(v||'viewer');if(!['admin','developer','viewer'].includes(x))throw new Error('Role tidak valid.');return x;}
+function invite(workspaceId,userId,body){const token=`nhpi_${crypto.randomBytes(32).toString('base64url')}`;model.createInvite(workspaceId,email(body.email),role(body.role),userId,token);return token;}
+async function acceptNew(token,passwordRaw){const inv=model.findInvite(token);if(!inv)throw new Error('Undangan tidak valid atau kedaluwarsa.');let user=model.userByEmail(inv.email);if(user)throw new Error('Email ini sudah terdaftar. Login terlebih dahulu lalu buka ulang link undangan.');const password=validatePassword(passwordRaw);const id=model.addUser(inv.email,await bcrypt.hash(password,12));model.acceptInvite(inv,id);return{id,email:inv.email,workspaceId:inv.workspace_id};}
+function acceptExisting(token,user){const inv=model.findInvite(token);if(!inv)throw new Error('Undangan tidak valid atau kedaluwarsa.');if(inv.email!==user.email)throw new Error('Undangan ini ditujukan ke email lain.');model.acceptInvite(inv,user.id);return inv.workspace_id;}
+module.exports={members:model.members,invites:model.invites,findInvite:model.findInvite,invite,acceptNew,acceptExisting,setRole:model.setRole,remove:model.remove};

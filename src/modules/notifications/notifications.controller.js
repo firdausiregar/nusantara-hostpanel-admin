@@ -1,0 +1,14 @@
+'use strict';
+const service=require('./notifications.service');const audit=require('../../lib/audit');
+function index(req,res){res.render('notifications/index',{title:'Notifications',notifications:service.list(req.workspace.id,150),channels:service.publicChannels(req.workspace.id)});}
+function read(req,res){service.markRead(req.workspace.id,Number(req.params.id));res.redirect('/notifications');}
+function readAll(req,res){const r=service.markAllRead(req.workspace.id);audit(req,'notification.read_all','notifications',`changes=${r.changes||0}`);res.redirect('/notifications');}
+function removeOne(req,res){const r=service.remove(req.workspace.id,Number(req.params.id));audit(req,'notification.delete',req.params.id,`changes=${r.changes||0}`);req.flash('success','Notifikasi dihapus.');res.redirect('/notifications');}
+function removeRead(req,res){const r=service.removeRead(req.workspace.id);audit(req,'notification.delete_read','notifications',`changes=${r.changes||0}`);req.flash('success',`${r.changes||0} notifikasi dibaca dihapus.`);res.redirect('/notifications');}
+function removeAll(req,res){const r=service.removeAll(req.workspace.id);audit(req,'notification.delete_all','notifications',`changes=${r.changes||0}`);req.flash('success',`${r.changes||0} notifikasi dihapus.`);res.redirect('/notifications');}
+function removeSelected(req,res){const ids=Array.isArray(req.body.ids)?req.body.ids:[req.body.ids].filter(Boolean);const r=service.removeSelected(req.workspace.id,ids);audit(req,'notification.delete_selected','notifications',`changes=${r.changes||0}`);req.flash('success',`${r.changes||0} notifikasi dipilih dihapus.`);res.redirect('/notifications');}
+async function addChannel(req,res){try{const type=String(req.body.type||'');await service.addChannel(req.workspace.id,type,req.body);audit(req,'notification.channel.create',type);req.flash('success','Notification channel ditambahkan.');}catch(e){req.flash('error',e.message);}res.redirect('/notifications');}
+function toggle(req,res){try{service.toggle(req.workspace.id,Number(req.params.id),String(req.body.enabled)==='1');req.flash('success','Channel diperbarui.');}catch(e){req.flash('error',e.message);}res.redirect('/notifications');}
+function remove(req,res){try{service.removeChannel(req.workspace.id,Number(req.params.id));audit(req,'notification.channel.delete',req.params.id);req.flash('success','Channel dihapus.');}catch(e){req.flash('error',e.message);}res.redirect('/notifications');}
+async function test(req,res){try{await service.notify(req.workspace.id,{level:'success',type:'test',title:'Test notification',message:'Nusantara HostPanel notification channel bekerja.'});req.flash('success','Test notification dikirim ke channel aktif.');}catch(e){req.flash('error',e.message);}res.redirect('/notifications');}
+module.exports={index,read,readAll,removeOne,removeRead,removeAll,removeSelected,addChannel,toggle,remove,test};

@@ -1,0 +1,1 @@
+'use strict';const express=require('express');const c=require('./api.controller');const r=express.Router();r.get('/v1/apps',c.guard('read'),c.apps);r.get('/v1/domains',c.guard('read'),c.domains);r.post('/v1/apps/:id/deploy',c.guard('deploy'),c.deploy);r.post('/v1/apps/:id/:action',c.guard('apps:write'),c.action);module.exports=r;

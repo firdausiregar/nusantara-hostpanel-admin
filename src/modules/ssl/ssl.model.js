@@ -1,0 +1,5 @@
+'use strict';
+function covers(pattern,domain){pattern=String(pattern||'').toLowerCase().replace(/\.$/,'');domain=String(domain||'').toLowerCase().replace(/\.$/,'');if(pattern===domain)return true;if(!pattern.startsWith('*.'))return false;const base=pattern.slice(2);if(!domain.endsWith(`.${base}`))return false;const left=domain.slice(0,-(base.length+1));return Boolean(left)&&!left.includes('.');}
+function certificateFor(certificates,domain){return(certificates||[]).find((c)=>(c.domains||[]).includes(domain))||(certificates||[]).find((c)=>(c.domains||[]).some((n)=>covers(n,domain)))||null;}
+function normalizeStatus(parsed={}){return{tlsMode:String(parsed.tlsMode||''),timerName:String(parsed.timerName||''),timerActive:parsed.timerActive??null,timerEnabled:parsed.timerEnabled??null,nextRun:String(parsed.nextRun||''),certbotVersion:String(parsed.certbotVersion||''),certificates:Array.isArray(parsed.certificates)?parsed.certificates:[]};}
+module.exports={covers,certificateFor,normalizeStatus};

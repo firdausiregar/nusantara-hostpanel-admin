@@ -1,0 +1,1 @@
+'use strict';const service=require('./updates.service');async function index(req,res){let latest=null,error='';try{latest=await service.latest();}catch(e){error=e.message;}res.render('updates/index',{title:'Release & Updates',current:service.current(),latest,error,hasUpdate:latest?service.compare(latest.tag,current)>0:false});}module.exports={index};

@@ -1,0 +1,8 @@
+'use strict';const model=require('./security.model');const vault=require('../../core/security/vault');const totp=require('../../core/security/totp');const tokens=require('../../core/security/tokens');const sessions=require('../../core/security/session-registry');
+function begin2fa(user){const secret=totp.generateSecret();return{secret,uri:totp.otpauth({secret,email:user.email})};}
+function enable2fa(userId,secret,code){if(!totp.verify(secret,code))throw new Error('Kode authenticator tidak valid. Pastikan jam perangkat sinkron.');const recovery=totp.recoveryCodes(10);const hashes=recovery.map((x)=>vault.fingerprint(x.toLowerCase()));model.update2fa(userId,vault.encrypt(secret),true,vault.encrypt(JSON.stringify(hashes)));return recovery;}
+function disable2fa(userId){model.update2fa(userId,null,false,null);}
+function createApiToken(userId,ws,body){const name=String(body.name||'').trim().slice(0,80);if(!name)throw new Error('Nama token wajib diisi.');const allowed=['read','deploy','apps:write','domains:write'];const requested=String(body.scopes||'read').split(',').map(x=>x.trim()).filter(Boolean);if(!requested.length||requested.some(s=>!allowed.includes(s)))throw new Error('Scope API tidak valid.');const token=tokens.newToken('nhp');const days=Math.max(1,Math.min(Number(body.days)||90,365));const expires=new Date(Date.now()+days*86400000).toISOString();model.insertToken(userId,ws,name,tokens.prefix(token),tokens.hashToken(token),requested.join(','),expires);return{token,expires,scopes:requested.join(',')};}
+function revokeSession(userId,id){return sessions.revoke(userId,id);}
+function revokeOthers(userId,current){return sessions.revokeOthers(userId,current);}
+module.exports={begin2fa,enable2fa,disable2fa,createApiToken,revokeSession,revokeOthers};

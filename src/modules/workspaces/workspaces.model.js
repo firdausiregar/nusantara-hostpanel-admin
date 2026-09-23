@@ -1,0 +1,7 @@
+'use strict';
+const db=require('../../core/database');
+function listForUser(user){if(user.role==='admin')return db.prepare("SELECT w.*,COALESCE(wm.role,'owner') AS membership_role FROM workspaces w LEFT JOIN workspace_members wm ON wm.workspace_id=w.id AND wm.user_id=? ORDER BY w.id").all(user.id);return db.prepare('SELECT w.*,wm.role AS membership_role FROM workspace_members wm JOIN workspaces w ON w.id=wm.workspace_id WHERE wm.user_id=? ORDER BY w.id').all(user.id);}
+function create(name,slug,userId){return db.transaction(()=>{const info=db.prepare('INSERT INTO workspaces (name,slug,owner_user_id) VALUES (?,?,?)').run(name,slug,userId);const id=Number(info.lastInsertRowid);db.prepare("INSERT INTO workspace_members (workspace_id,user_id,role) VALUES (?,?, 'owner')").run(id,userId);db.prepare('INSERT OR IGNORE INTO backup_policies (workspace_id) VALUES (?)').run(id);return id;})();}
+function getForUser(id,user){if(user.role==='admin')return db.prepare("SELECT *, 'owner' AS membership_role FROM workspaces WHERE id=?").get(id);return db.prepare('SELECT w.*,wm.role AS membership_role FROM workspaces w JOIN workspace_members wm ON wm.workspace_id=w.id WHERE w.id=? AND wm.user_id=?').get(id,user.id);}
+function updatePolicy(id,p){return db.prepare(`UPDATE workspaces SET plan=?,status=?,max_apps=?,max_domains=?,max_databases=?,max_storage_mb=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(p.plan,p.status,p.maxApps,p.maxDomains,p.maxDatabases,p.maxStorageMb,id);}
+module.exports={listForUser,create,getForUser,updatePolicy};

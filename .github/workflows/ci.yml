@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-boundaries:
+    strategy:
+      matrix:
+        node: ['22', '24']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"
+      - run: npm run check
+      - run: npm run check:assets
+      - run: for f in scripts/*.sh; do bash -n "$f"; done
+      - run: npm run test:security
+
+  runtime-quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-fund --no-audit
+          else
+            npm install --no-fund --no-audit
+          fi
+      - run: npm rebuild better-sqlite3
+      - run: npm run check:migrations
+      - run: npm run smoke:local
+      - run: npm run css:build
+      - run: npm run check:assets
+      - run: npm audit --omit=dev --audit-level=high
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build --strict
+
+  package-dry-run:
+    runs-on: ubuntu-latest
+    needs: [static-boundaries, runtime-quality-gate, docs]
+    steps:
+      - uses: actions/checkout@v4
+      - run: test -x scripts/install.sh || chmod +x scripts/install.sh
+      - run: bash -n scripts/install.sh
+      - run: test -s public/css/app.css && test -s public/css/hostpanel-ui.css
+      - run: test -s README.md && test -s CHANGELOG.md && test -s SECURITY.md
+      - run: test ! -e scripts/upgrade-v1.sh

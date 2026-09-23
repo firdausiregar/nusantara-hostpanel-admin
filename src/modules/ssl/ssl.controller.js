@@ -1,0 +1,8 @@
+'use strict';
+const service=require('./ssl.service');const audit=require('../../lib/audit');
+async function index(req,res){const data=await service.status();res.render('ssl/index',{title:'SSL & Renewal',status:data.status,statusError:data.error,systemTargets:data.targets});}
+async function systemAction(req,res){const action=req.params.action;try{const target=await service.systemAction(req.params.kind,action);audit(req,`ssl.system.${action}`,target.domain,target.kind);req.flash('success',`${target.label}: ${action} berhasil.`);}catch(error){req.flash('error',error.message||'Aksi SSL gagal.');}res.redirect('/ssl');}
+async function systemAuto(req,res){try{const results=await service.autoIssue();for(const x of results)if(x.ok)audit(req,'ssl.system.issue',x.target.domain,`${x.target.kind}; auto-all`);const failed=results.filter((x)=>!x.ok).length;const text=results.map((x)=>`${x.target.domain}: ${x.ok?'OK':`GAGAL (${x.error})`}`).join(' · ');req.flash(failed?'error':'success',`Auto SSL sistem selesai. ${text}`);}catch(error){req.flash('error',error.message||'Auto SSL sistem gagal.');}res.redirect('/ssl');}
+async function dryRun(req,res){try{await service.dryRun();audit(req,'ssl.dry-run','certbot');req.flash('success','Simulasi renewal Certbot berhasil.');}catch(error){req.flash('error',error.message||'Dry-run Certbot gagal.');}res.redirect('/ssl');}
+async function renew(req,res){try{await service.renew();audit(req,'ssl.renew','certbot');req.flash('success','Pengecekan renewal selesai.');}catch(error){req.flash('error',error.message||'Renewal Certbot gagal.');}res.redirect('/ssl');}
+module.exports={index,systemAction,systemAuto,dryRun,renew};

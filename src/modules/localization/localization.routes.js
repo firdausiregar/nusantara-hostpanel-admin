@@ -1,0 +1,1 @@
+'use strict';const express=require('express');const {requireAuth}=require('../../middleware/auth');const c=require('./localization.controller');const r=express.Router();r.post('/',requireAuth,c.update);module.exports=r;

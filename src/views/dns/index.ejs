@@ -1,0 +1,9 @@
+<%- include('../partials/app-start') %>
+<% if (!dnsPublic) { %>
+<div class="mb-6 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5 text-sm text-slate-300"><div class="font-bold text-amber-300">BIND9 belum diekspos sebagai DNS publik</div><p class="mt-2 text-slate-400">Zone tetap bisa dibuat dan divalidasi, tetapi resolver Internet tidak akan memakai server ini sebelum provider menyediakan TCP/UDP port 53. Jangan delegasikan NS publik hanya berdasarkan status service hijau.</p></div>
+<% } %>
+<div class="grid gap-6 xl:grid-cols-[.7fr_1.3fr]">
+  <section class="card p-5 sm:p-6"><h2 class="font-bold">Tambah DNS zone</h2><p class="mt-1 text-sm text-slate-500">Panel akan membuat master zone BIND9 dan reload setelah validasi.</p><form method="post" action="/dns" class="mt-5"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="label">Domain</label><input class="field" name="domain" placeholder="example.com" required><button class="btn-primary mt-4 w-full" type="submit">Buat zone</button></form></section>
+  <section><div class="mb-4"><h2 class="font-bold">Authoritative zones</h2><p class="mt-1 text-sm text-slate-500">Record didukung: A, AAAA, CNAME, MX, TXT, NS, CAA, SRV.</p></div><div class="space-y-3"><% if (!zones.length) { %><div class="card p-7 text-sm text-slate-500">Belum ada zone.</div><% } %><% zones.forEach(z => { %><a href="/dns/<%= z.id %>" class="card flex items-center justify-between p-5 transition hover:bg-white/[0.07]"><div><div class="font-bold"><%= z.domain %></div><div class="mt-1 text-xs text-slate-500"><%= z.record_count %> record · DNSSEC <%= z.dnssec_enabled ? 'on' : 'off' %></div></div><div class="text-gold-400">→</div></a><% }) %></div></section>
+</div>
+<%- include('../partials/app-end') %>

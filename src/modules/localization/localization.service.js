@@ -1,0 +1,1 @@
+'use strict';const i18n=require('../../core/i18n');const model=require('./localization.model');function setLocale(userId,raw){const locale=i18n.normalize(raw);model.setLocale(userId,locale);return locale;}module.exports={setLocale,supported:i18n.supported};

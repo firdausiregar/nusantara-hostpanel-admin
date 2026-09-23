@@ -1,0 +1,14 @@
+'use strict';
+const express=require('express');
+const rateLimit=require('express-rate-limit');
+const {requirePlatformAdmin}=require('../../middleware/auth');
+const c=require('./ssl.controller');
+const r=express.Router();
+const limiter=rateLimit({windowMs:15*60*1000,limit:8,standardHeaders:'draft-8',legacyHeaders:false});
+r.use(requirePlatformAdmin);
+r.get('/',c.index);
+for(const a of ['preflight','staging','issue','sync'])r.post(`/system/:kind/${a}`,limiter,(req,res)=>{req.params.action=a;return c.systemAction(req,res);});
+r.post('/system-auto',limiter,c.systemAuto);
+r.post('/dry-run',limiter,c.dryRun);
+r.post('/renew',limiter,c.renew);
+module.exports=r;

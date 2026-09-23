@@ -1,0 +1,1 @@
+'use strict';const db=require('../../core/database');module.exports={apps:(ws)=>db.prepare('SELECT id,name,slug FROM apps WHERE workspace_id=? ORDER BY name').all(ws),appBySlug:(slug,ws)=>db.prepare('SELECT id,name,slug FROM apps WHERE slug=? AND workspace_id=?').get(slug,ws)};

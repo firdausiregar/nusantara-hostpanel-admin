@@ -1,0 +1,74 @@
+@import "tailwindcss" source("../../src");
+
+@theme {
+  --color-ink-950: #07090d;
+  --color-ink-900: #0d1117;
+  --color-ink-850: #121821;
+  --color-ink-800: #18212d;
+  --color-gold-300: #f9d98a;
+  --color-gold-400: #f2c35f;
+  --color-gold-500: #dca43a;
+  --color-cyan-400: #5ee7df;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body { @apply bg-ink-950 text-slate-100 antialiased; background-image: radial-gradient(circle at 15% -10%, rgba(242,195,95,.10), transparent 34rem), radial-gradient(circle at 100% 0%, rgba(94,231,223,.05), transparent 34rem); }
+  input, select, textarea { @apply outline-none; }
+  code { @apply rounded bg-white/[0.06] px-1.5 py-0.5 text-[.9em] text-slate-200; }
+  ::selection { background: rgba(242,195,95,.28); }
+}
+
+@layer components {
+  .card { @apply rounded-2xl border border-white/[0.08] bg-white/[0.035] shadow-2xl shadow-black/15 backdrop-blur-sm; }
+  .panel { @apply rounded-2xl border border-white/[0.08] bg-ink-900/70; }
+  .glass { @apply border border-white/[0.08] bg-white/[0.045] backdrop-blur-xl; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gold-400 px-4 py-2.5 text-sm font-bold text-ink-950 shadow-lg shadow-gold-400/10 transition hover:bg-gold-300 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.055] px-4 py-2.5 text-sm font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/[0.09] disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-danger { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50; }
+  .field { @apply w-full rounded-xl border border-white/10 bg-black/25 px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-gold-400/60 focus:ring-2 focus:ring-gold-400/10; }
+  .label { @apply mb-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500; }
+  .badge { @apply inline-flex items-center rounded-full border border-white/10 bg-white/[0.055] px-2.5 py-1 text-xs font-medium text-slate-300; }
+  .badge-ok { @apply inline-flex items-center rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-semibold text-emerald-300; }
+  .badge-warn { @apply inline-flex items-center rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-xs font-semibold text-amber-200; }
+  .badge-bad { @apply inline-flex items-center rounded-full border border-red-400/20 bg-red-400/10 px-2.5 py-1 text-xs font-semibold text-red-200; }
+  .metric { @apply rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-5; }
+  .metric-kicker { @apply text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500; }
+  .metric-value { @apply mt-2 text-3xl font-black tracking-tight text-white; }
+  .table-wrap { @apply overflow-x-auto rounded-2xl border border-white/10; }
+  .table { @apply min-w-full divide-y divide-white/10 text-sm; }
+  .table th { @apply bg-white/[0.035] px-4 py-3 text-left text-[11px] font-bold uppercase tracking-[0.13em] text-slate-500; }
+  .table td { @apply px-4 py-3.5 align-middle text-slate-200; }
+  .table tbody { @apply divide-y divide-white/[0.055]; }
+  .nav-section { @apply px-3 pb-2 pt-5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600; }
+  .nav-link { @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-400 transition hover:bg-white/[0.05] hover:text-white; }
+  .nav-link-active { @apply bg-white/[0.08] font-semibold text-white ring-1 ring-inset ring-white/[0.06]; }
+  .timeline-dot { @apply mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full border-2 border-ink-900 bg-slate-600 ring-2 ring-white/10; }
+}
+@layer base {
+  progress { appearance: none; -webkit-appearance: none; border: 0; background: rgba(255,255,255,.06); }
+  progress::-webkit-progress-bar { background: rgba(255,255,255,.06); border-radius: 999px; }
+  progress::-webkit-progress-value { background: #f2c35f; border-radius: 999px; }
+  progress::-moz-progress-bar { background: #f2c35f; border-radius: 999px; }
+}
+
+@layer components {
+  .mobile-safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .sidebar-backdrop { @apply fixed inset-0 z-30 bg-black/70 backdrop-blur-sm transition-opacity lg:hidden; }
+  .nav-group-button { @apply flex w-full items-center justify-between rounded-lg px-3 pb-1 pt-5 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600 hover:text-slate-400; }
+  .project-source { @apply cursor-pointer rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left transition hover:border-white/20 hover:bg-white/[0.055]; }
+  .project-source-active { @apply border-gold-400/50 bg-gold-400/[0.08] ring-2 ring-gold-400/10; }
+  .repo-card { @apply flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-black/15 p-3 text-left transition hover:border-white/20 hover:bg-white/[0.05]; }
+  .repo-card-active { @apply border-gold-400/50 bg-gold-400/[0.08] ring-1 ring-gold-400/20; }
+  .mobile-bottom-nav { @apply fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-white/[0.08] bg-ink-950/95 px-2 pb-[max(.4rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl lg:hidden; }
+  .mobile-bottom-link { @apply flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-semibold text-slate-500; }
+  .mobile-bottom-link-active { @apply bg-white/[0.06] text-gold-300; }
+  .mobile-bottom-icon { @apply flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[9px] font-black; }
+}
+
+@media (max-width: 639px) {
+  .table th, .table td { padding-left: .75rem; padding-right: .75rem; }
+  .metric-value { font-size: 1.6rem; line-height: 2rem; }
+  .btn-primary, .btn-secondary, .btn-danger { min-height: 2.6rem; }
+}

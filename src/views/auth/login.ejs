@@ -1,0 +1,20 @@
+<%- include('../partials/head') %>
+<div class="grid min-h-screen lg:grid-cols-2">
+  <div class="hidden border-r border-white/10 bg-ink-900 p-12 lg:flex lg:flex-col lg:justify-between">
+    <div class="flex items-center gap-3"><div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gold-400 font-black text-ink-950">H</div><span class="font-bold"><%= panelName %></span></div>
+    <div class="max-w-xl"><p class="mb-4 text-sm font-semibold uppercase tracking-[.2em] text-gold-400">Private infrastructure panel</p><h1 class="text-5xl font-black leading-tight">Kelola aplikasi, reverse proxy, DNS dan TLS dari satu panel kecil.</h1><p class="mt-5 text-slate-400">Panel hanya bind ke localhost; publik masuk lewat Nginx HTTPS.</p></div>
+    <div class="text-xs text-slate-600">Nginx · BIND9 · systemd · Let’s Encrypt</div>
+  </div>
+  <div class="flex items-center justify-center p-6">
+    <form method="post" action="/login" class="card w-full max-w-md p-7 sm:p-9">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <h2 class="text-2xl font-bold">Masuk ke panel</h2><p class="mt-2 text-sm text-slate-500">Gunakan akun administrator server.</p>
+      <% if (passwordChanged) { %><div class="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">Password berhasil diubah. Semua session lama sudah dibatalkan; silakan login kembali.</div><% } %>
+      <div class="mt-7"><label class="label">Email</label><input class="field" type="email" name="email" autocomplete="username" required></div>
+      <div class="mt-4"><label class="label">Password</label><input class="field" type="password" name="password" autocomplete="current-password" required></div>
+      <% if (flash) { %><div class="mt-4 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"><%= flash.message %></div><% } %>
+      <button class="btn-primary mt-6 w-full" type="submit">Masuk</button><a class="mt-4 block text-center text-xs font-semibold text-gold-300" href="/forgot-password">Lupa password?</a>
+    </form>
+  </div>
+</div>
+<%- include('../partials/footer') %>

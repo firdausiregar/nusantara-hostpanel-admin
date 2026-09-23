@@ -1,0 +1,49 @@
+openapi: 3.1.0
+info:
+  title: Nusantara HostPanel API
+  version: 1.2.0
+  description: Token-scoped API for self-hosted HostPanel automation.
+servers:
+  - url: /api
+paths:
+  /v1/projects:
+    get:
+      summary: List projects in the token workspace
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Project list}
+  /v1/projects/{id}/restart:
+    post:
+      summary: Restart a project
+      security: [{bearerAuth: []}]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: {type: integer}
+      responses:
+        '202': {description: Restart accepted}
+  /hooks/midtrans:
+    post:
+      summary: Midtrans payment notification callback
+      description: Public provider callback. Authenticity is verified with Midtrans signature_key and reconciled with GET Status before subscription activation.
+      responses:
+        '200': {description: Notification accepted or already processed}
+        '401': {description: Invalid Midtrans signature}
+  /integrations/github/callback:
+    get:
+      summary: GitHub OAuth callback
+      description: Browser callback used to complete the authenticated GitHub OAuth connection flow.
+      responses:
+        '302': {description: Redirect back to Integrations after processing}
+  /integrations/github/app/callback:
+    get:
+      summary: GitHub App installation callback
+      description: Validates the returned installation with the configured GitHub App before attaching it to the active workspace.
+      responses:
+        '302': {description: Redirect back to Integrations after processing}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

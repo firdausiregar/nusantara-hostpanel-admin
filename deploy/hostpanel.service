@@ -1,0 +1,27 @@
+[Unit]
+Description=Nusantara HostPanel Admin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hostpanel
+Group=hostpanel
+WorkingDirectory=/opt/hostpanel
+EnvironmentFile=/etc/hostpanel/hostpanel.env
+ExecStart=/usr/local/bin/node /opt/hostpanel/src/app.js
+Restart=on-failure
+RestartSec=3
+MemoryHigh=192M
+MemoryMax=320M
+TasksMax=256
+OOMPolicy=stop
+PrivateTmp=true
+ProtectHome=true
+UMask=0027
+
+# The web process itself has no Linux capabilities. Privileged actions go only
+# through sudo -> /usr/local/sbin/hostpanelctl, which validates an allowlist.
+
+[Install]
+WantedBy=multi-user.target
