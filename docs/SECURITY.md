@@ -33,4 +33,4 @@ Do **not** publish exploitable details in a public issue. After the repository i
 
 `DNS_PUBLIC=1` is appropriate only when both public TCP and UDP port 53 reach BIND9. Authoritative DNS used in production should have redundant nameservers on separate failure domains. Remote MariaDB exposure, generic shell access, and private Git credential storage are intentionally outside the default security model.
 
-See [SECURITY-AUDIT.md](SECURITY-AUDIT.md) for the release review and known limitations, and [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) for trust boundaries and threat assumptions.
+See [SECURITY-AUDIT.md](SECURITY.md) for the release review and known limitations, and [docs/THREAT-MODEL.md](THREAT-MODEL.md) for trust boundaries and threat assumptions.
