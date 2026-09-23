@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nusantara HostPanel API
-  version: 1.2.0
+  version: 1.0.0
   description: Token-scoped API for self-hosted HostPanel automation.
 servers:
   - url: /api

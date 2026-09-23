@@ -75,5 +75,5 @@ module.exports = Object.freeze({
   runtimeMode,
   localDevelopment: runtimeMode === 'local',
   repoUrl: 'https://github.com/firdausiregar/nusantara-hostpanel-admin',
-  release: '1.2.0',
+  release: '1.0.0',
 });

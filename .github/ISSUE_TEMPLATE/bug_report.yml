@@ -7,7 +7,7 @@ body:
     id: version
     attributes:
       label: HostPanel version
-      placeholder: 1.2.0
+      placeholder: 1.0.0
     validations:
       required: true
   - type: dropdown

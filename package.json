@@ -1,6 +1,6 @@
 {
   "name": "nusantara-hostpanel-admin",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "private": false,
   "description": "Production-grade security-first self-hosted Node.js SaaS/PaaS with hierarchical MVC, Midtrans billing, GitHub OAuth/App imports, i18n, notifications, preview deployments, atomic releases, Nginx/BIND9/MariaDB/Let's Encrypt automation, and laptop-safe development.",
   "main": "src/app.js",
