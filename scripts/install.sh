@@ -102,7 +102,8 @@ PY
 }
 
 prompt_value() {
-  local var="$1" label="$2" default="${3:-}" secret="${4:-0}" value="${!var:-}"
+  local var="$1" label="$2" default="${3:-}" secret="${4:-0}" value=""
+  value="${!var-}"
   [[ -n "$value" ]] && return 0
   if [[ -t 0 ]]; then
     if [[ "$secret" == 1 ]]; then
