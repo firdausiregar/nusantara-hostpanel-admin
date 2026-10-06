@@ -11,8 +11,8 @@ node_modules/
 *.crt
 *.csr
 hostpanel-credentials.txt
-backup/
-backups/
+/backup/
+/backups/
 *.sql
 *.sql.gz
 .env.local

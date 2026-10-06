@@ -632,8 +632,21 @@ CREDS
 fi
 
 systemctl restart hostpanel
-sleep 2
-curl -fsS http://127.0.0.1:3030/healthz >/dev/null
+wait_for_hostpanel_health() {
+  local attempt health_error=""
+  for ((attempt=1; attempt<=30; attempt++)); do
+    if health_error="$(curl -fsS --max-time 2 http://127.0.0.1:3030/healthz 2>&1)"; then
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "[HostPanel] Health check gagal setelah 60 detik: ${health_error:-tidak ada respons dari aplikasi}." >&2
+  systemctl status hostpanel --no-pager >&2 || true
+  journalctl -u hostpanel -n 80 --no-pager >&2 || true
+  return 1
+}
+wait_for_hostpanel_health
 
 # New control plane passed its local health gate; old source tree is no longer
 # needed. Persistent state lives outside /opt/hostpanel and is untouched.

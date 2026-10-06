@@ -1,0 +1,14 @@
+'use strict';
+const express=require('express');
+const rateLimit=require('express-rate-limit');
+const {requirePlatformAdmin}=require('../../middleware/auth');
+const c=require('./backups.controller');
+const r=express.Router();
+const limiter=rateLimit({windowMs:10*60*1000,limit:3,standardHeaders:'draft-8',legacyHeaders:false});
+r.use(requirePlatformAdmin);
+r.get('/',c.index);
+r.post('/create',limiter,c.create);
+r.post('/:name/verify',c.verify);
+r.post('/:name/restore',limiter,c.restore);
+r.post('/:name/offsite',limiter,c.offsite);
+module.exports=r;

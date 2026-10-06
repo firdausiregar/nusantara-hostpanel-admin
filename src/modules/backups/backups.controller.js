@@ -1,0 +1,10 @@
+'use strict';
+const service=require('./backups.service');
+const audit=require('../../lib/audit');
+function safeName(v){v=String(v||'');if(!/^\d{8}-\d{6}$/.test(v))throw new Error('Nama backup tidak valid.');return v;}
+async function index(req,res){const backups=await service.list();res.render('backups/index',{title:'Backup & Recovery',backups});}
+async function create(req,res){try{const item=await service.create();audit(req,'backup.create',item.name||'backup');req.flash('success',`Backup ${item.name||''} berhasil dibuat.`);}catch(e){req.flash('error',e.message||'Backup gagal.');}res.redirect('/backups');}
+async function verify(req,res){try{const name=safeName(req.params.name);const item=await service.verify(name);audit(req,'backup.verify',name,`verified=${Boolean(item.verified)}`);req.flash(item.verified?'success':'error',item.verified?'Checksum backup valid.':'Verifikasi backup gagal.');}catch(e){req.flash('error',e.message||'Verifikasi backup gagal.');}res.redirect('/backups');}
+async function restore(req,res){try{const name=safeName(req.params.name);if(String(req.body.confirm||'')!==name)throw new Error('Konfirmasi restore tidak cocok dengan nama backup.');const out=await service.restore(name);audit(req,'backup.restore.schedule',name,out.unit||'');req.flash('success','Restore telah diverifikasi dan dijadwalkan. Panel akan restart otomatis; safety backup dibuat lebih dulu.');}catch(e){req.flash('error',e.message||'Restore gagal dijadwalkan.');}res.redirect('/backups');}
+async function offsite(req,res){try{const name=safeName(req.params.name);const remote=String(req.body.remote||'').trim();if(!/^[a-zA-Z0-9_-]{1,64}$/.test(remote))throw new Error('Nama remote rclone tidak valid.');const out=await service.offsite(name,remote);audit(req,'backup.offsite',name,`remote=${remote}`);req.flash('success',`Backup disalin ke ${out.destination||remote}.`);}catch(e){req.flash('error',e.message||'Upload off-site gagal.');}res.redirect('/backups');}
+module.exports={index,create,verify,restore,offsite};
