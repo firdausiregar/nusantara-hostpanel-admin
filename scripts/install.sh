@@ -29,8 +29,10 @@ cleanup_install() {
   [[ -n "${TMP_NODE:-}" && -d "${TMP_NODE:-}" ]] && rm -rf "$TMP_NODE" || true
 }
 rollback_install() {
-  local rc=$?
+  local rc="$1" failed_command="$2" failed_line="$3"
   set +e
+  printf '[HostPanel] Perintah gagal (exit %s, baris %s): %s\n' \
+    "$rc" "$failed_line" "$failed_command" >&2
   if [[ "${CODE_COMMITTED:-0}" == 1 && -n "${PREVIOUS_CODE:-}" && -d "$PREVIOUS_CODE" ]]; then
     echo "[HostPanel] Install gagal setelah code swap; mengembalikan source sebelumnya..." >&2
     systemctl stop hostpanel 2>/dev/null || true
@@ -44,7 +46,7 @@ rollback_install() {
   exit "$rc"
 }
 trap cleanup_install EXIT
-trap rollback_install ERR
+trap 'rollback_install "$?" "$BASH_COMMAND" "$LINENO"' ERR
 
 # Release assets are prebuilt and must exist before touching the active install.
 CSS_BUNDLE="$ROOT_DIR/public/css/app.css"
