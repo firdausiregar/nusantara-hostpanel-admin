@@ -39,6 +39,24 @@ for label, value, optional in [('PANEL_DOMAIN',panel,False),('PMA_DOMAIN',pma,Tr
 if not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', email): raise SystemExit('CERTBOT_EMAIL tidak valid.')
 PYVALID
 
+# Wildcards require automated DNS-01. Credentials stay in a root-only INI
+# file; Certbot records the authenticator and path for unattended renewal.
+SSL_WILDCARD="${SSL_WILDCARD:-0}"
+DNS_PROVIDER="${DNS_PROVIDER:-}"
+DNS_CREDENTIALS="${DNS_CREDENTIALS:-}"
+DNS_PROPAGATION_SECONDS="${DNS_PROPAGATION_SECONDS:-60}"
+[[ "$SSL_WILDCARD" == 0 || "$SSL_WILDCARD" == 1 ]] || { echo "SSL_WILDCARD harus 0 atau 1." >&2; exit 2; }
+if [[ "$SSL_WILDCARD" == 1 ]]; then
+  [[ "$DNS_PROPAGATION_SECONDS" =~ ^[0-9]+$ ]] || { echo "DNS_PROPAGATION_SECONDS harus angka." >&2; exit 2; }
+  [[ "$DNS_CREDENTIALS" == /* && -f "$DNS_CREDENTIALS" && ! -L "$DNS_CREDENTIALS" ]] || { echo "DNS_CREDENTIALS harus path absolut file INI." >&2; exit 2; }
+  [[ "$(stat -c %u "$DNS_CREDENTIALS")" == 0 && "$(stat -c %a "$DNS_CREDENTIALS")" == 600 ]] || { echo "File DNS credentials harus dimiliki root dengan chmod 600." >&2; exit 2; }
+  case "$DNS_PROVIDER" in
+    cloudflare) DNS_ARGS=(--dns-cloudflare --dns-cloudflare-credentials "$DNS_CREDENTIALS" --dns-cloudflare-propagation-seconds "$DNS_PROPAGATION_SECONDS") ;;
+    rfc2136) DNS_ARGS=(--dns-rfc2136 --dns-rfc2136-credentials "$DNS_CREDENTIALS" --dns-rfc2136-propagation-seconds "$DNS_PROPAGATION_SECONDS") ;;
+    *) echo "Wildcard: pilih DNS_PROVIDER=cloudflare atau rfc2136 sesuai DNS authoritative." >&2; exit 2 ;;
+  esac
+fi
+
 WEBROOT=/var/www/letsencrypt
 mkdir -p "$WEBROOT/.well-known/acme-challenge"
 chown -R www-data:www-data "$WEBROOT"
@@ -76,8 +94,37 @@ issue() {
     --cert-name "$domain" -m "$CERTBOT_EMAIL" -d "$domain"
 }
 
-preflight "$PANEL_DOMAIN"
-issue "$PANEL_DOMAIN"
+PANEL_CERT_NAME="$PANEL_DOMAIN"
+PMA_CERT_NAME="$PMA_DOMAIN"
+if [[ "$SSL_WILDCARD" == 1 ]]; then
+  PANEL_CERT_NAME="${PANEL_DOMAIN}-wildcard"
+  CERT_DOMAINS=(-d "$PANEL_DOMAIN" -d "*.$PANEL_DOMAIN")
+  [[ -n "$PMA_DOMAIN" && "$PMA_DOMAIN" != "$PANEL_DOMAIN" ]] && CERT_DOMAINS+=(-d "$PMA_DOMAIN")
+  /opt/certbot/bin/certbot certonly "${DNS_ARGS[@]}" \
+    --non-interactive --agree-tos --keep-until-expiring \
+    --cert-name "$PANEL_CERT_NAME" -m "$CERTBOT_EMAIL" "${CERT_DOMAINS[@]}"
+  PMA_CERT_NAME="$PANEL_CERT_NAME"
+else
+  preflight "$PANEL_DOMAIN"
+  issue "$PANEL_DOMAIN"
+fi
+
+# Restore both managed vhosts if validation/reload fails.
+NGINX_BACKUP="$(mktemp -d)"
+for domain in "$PANEL_DOMAIN" "$PMA_DOMAIN"; do
+  [[ -z "$domain" ]] && continue
+  [[ -f "/etc/nginx/sites-available/$domain.conf" ]] || { echo "Vhost $domain belum terpasang." >&2; rm -rf "$NGINX_BACKUP"; exit 3; }
+  cp -a "/etc/nginx/sites-available/$domain.conf" "$NGINX_BACKUP/$domain.conf"
+done
+rollback_nginx() {
+  local rc=$?
+  trap - ERR
+  cp -a "$NGINX_BACKUP/." /etc/nginx/sites-available/
+  nginx -t && systemctl reload nginx || true
+  rm -rf "$NGINX_BACKUP"
+  exit "$rc"
+}
+trap rollback_nginx ERR
 
 cat > "/etc/nginx/sites-available/${PANEL_DOMAIN}.conf" <<NGINX
 server {
@@ -99,9 +146,9 @@ server {
     listen [::]:443 ssl http2;
     server_name ${PANEL_DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/${PANEL_DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PANEL_DOMAIN}/privkey.pem;
-    ssl_protocols TLSv1.0.0 TLSv1.3;
+    ssl_certificate /etc/letsencrypt/live/${PANEL_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${PANEL_CERT_NAME}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 1d;
 
@@ -119,8 +166,8 @@ server {
 NGINX
 
 if [[ -n "$PMA_DOMAIN" ]]; then
-  if preflight "$PMA_DOMAIN"; then
-    issue "$PMA_DOMAIN"
+  if [[ "$SSL_WILDCARD" == 1 ]] || preflight "$PMA_DOMAIN"; then
+    if [[ "$SSL_WILDCARD" == 0 ]]; then issue "$PMA_DOMAIN"; fi
     PHP_FPM_SOCK="$(find /run/php -maxdepth 1 -type s -name 'php*-fpm.sock' | head -n1)"
     [[ -n "$PHP_FPM_SOCK" ]] || { echo "Socket PHP-FPM tidak ditemukan." >&2; exit 3; }
     cat > "/etc/nginx/sites-available/${PMA_DOMAIN}.conf" <<NGINX
@@ -147,9 +194,9 @@ server {
     index index.php;
     client_max_body_size 32m;
 
-    ssl_certificate /etc/letsencrypt/live/${PMA_DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${PMA_DOMAIN}/privkey.pem;
-    ssl_protocols TLSv1.0.0 TLSv1.3;
+    ssl_certificate /etc/letsencrypt/live/${PMA_CERT_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${PMA_CERT_NAME}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 1d;
 
@@ -173,12 +220,15 @@ fi
 
 nginx -t
 systemctl reload nginx
+trap - ERR
+rm -rf "$NGINX_BACKUP"
 systemctl enable --now hostpanel-certbot-renew.timer
 
 # Public links can now be HTTPS.
-if grep -q '^PHPMYADMIN_URL=' "$ENV_FILE" && [[ -n "$PMA_DOMAIN" && -e "/etc/letsencrypt/live/${PMA_DOMAIN}/fullchain.pem" ]]; then
+if grep -q '^PHPMYADMIN_URL=' "$ENV_FILE" && [[ -n "$PMA_DOMAIN" && -e "/etc/letsencrypt/live/${PMA_CERT_NAME}/fullchain.pem" ]]; then
   sed -i "s|^PHPMYADMIN_URL=.*|PHPMYADMIN_URL=https://${PMA_DOMAIN}|" "$ENV_FILE"
 fi
+sed -i "s|^PANEL_PUBLIC_URL=.*|PANEL_PUBLIC_URL=https://${PANEL_DOMAIN}|" "$ENV_FILE"
 systemctl restart hostpanel
 
 cat <<DONE

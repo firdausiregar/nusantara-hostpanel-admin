@@ -281,7 +281,12 @@ for bin in node npm npx corepack; do ln -sfn "/opt/node-v${NODE_VERSION}/bin/$bi
 id -u hostpanel >/dev/null 2>&1 || useradd --system --home /var/lib/hostpanel --shell /usr/sbin/nologin hostpanel
 id -u hostapps >/dev/null 2>&1 || useradd --system --home /nusantara-hostpanel/apps --shell /usr/sbin/nologin hostapps
 mkdir -p /var/lib/hostpanel /nusantara-hostpanel/apps /etc/hostpanel/{apps,zones}
+# Existing SQLite files may have been created by a root CLI/restore.
+# Stop the writer before repairing ownership of the database and WAL/SHM.
+systemctl stop hostpanel 2>/dev/null || true
 chown hostpanel:hostpanel /var/lib/hostpanel
+find /var/lib/hostpanel -maxdepth 1 -type f -name 'hostpanel.sqlite*' \
+  -exec chown hostpanel:hostpanel {} + -exec chmod 640 {} +
 chown root:hostapps /etc/hostpanel/apps
 chmod 750 /var/lib/hostpanel /etc/hostpanel /etc/hostpanel/apps
 
