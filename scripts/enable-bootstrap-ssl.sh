@@ -98,8 +98,23 @@ PANEL_CERT_NAME="$PANEL_DOMAIN"
 PMA_CERT_NAME="$PMA_DOMAIN"
 if [[ "$SSL_WILDCARD" == 1 ]]; then
   PANEL_CERT_NAME="${PANEL_DOMAIN}-wildcard"
-  CERT_DOMAINS=(-d "$PANEL_DOMAIN" -d "*.$PANEL_DOMAIN")
-  [[ -n "$PMA_DOMAIN" && "$PMA_DOMAIN" != "$PANEL_DOMAIN" ]] && CERT_DOMAINS+=(-d "$PMA_DOMAIN")
+  # A wildcard covers exactly one label, not deeper subdomains.
+  # Normalize DNS names before checking SAN redundancy.
+  panel_name="${PANEL_DOMAIN,,}"
+  panel_name="${panel_name%.}"
+  pma_name="${PMA_DOMAIN,,}"
+  pma_name="${pma_name%.}"
+  CERT_DOMAINS=(-d "$panel_name" -d "*.$panel_name")
+  pma_covered=0
+  if [[ "$pma_name" == "$panel_name" ]]; then
+    pma_covered=1
+  elif [[ "$pma_name" == *."$panel_name" ]]; then
+    pma_label="${pma_name%."$panel_name"}"
+    [[ -n "$pma_label" && "$pma_label" != *.* ]] && pma_covered=1
+  fi
+  if [[ -n "$pma_name" && "$pma_covered" == 0 ]]; then
+    CERT_DOMAINS+=(-d "$pma_name")
+  fi
   /opt/certbot/bin/certbot certonly "${DNS_ARGS[@]}" \
     --non-interactive --agree-tos --keep-until-expiring \
     --cert-name "$PANEL_CERT_NAME" -m "$CERTBOT_EMAIL" "${CERT_DOMAINS[@]}"
