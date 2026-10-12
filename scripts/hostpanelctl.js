@@ -41,7 +41,7 @@ function mkdir(p, mode = 0o750) { fs.mkdirSync(p, { recursive: true, mode }); }
 function safeDomain(raw) { const v = String(raw || '').toLowerCase().replace(/\.$/, ''); if (!DOMAIN_RE.test(v)) fail('Domain tidak valid.'); return v; }
 function safeSlug(raw) { const v = String(raw || '').toLowerCase(); if (!SLUG_RE.test(v)) fail('Slug tidak valid.'); return v; }
 function safePort(raw) { const n = Number(raw); if (!Number.isInteger(n) || n < 1024 || n > 65535) fail('Port tidak valid.'); return n; }
-function safePath(raw) { const input = String(raw || ''); if (!/^\/srv\/apps\/[a-zA-Z0-9._/-]+$/.test(input) || input.includes('..')) fail('Working directory harus berupa path aman di bawah /nusantara-hostpanel/apps/.'); const v = path.posix.normalize(input); if (!v.startsWith('/nusantara-hostpanel/apps/')) fail('Working directory tidak valid.'); return v; }
+function safePath(raw) { const input = String(raw || '').trim(); if (!/^\/nusantara-hostpanel\/apps\/[a-zA-Z0-9._/-]+$/.test(input) || input.includes('..')) fail('Working directory harus berupa path aman di bawah /nusantara-hostpanel/apps/.'); const v = path.posix.normalize(input); if (!v.startsWith('/nusantara-hostpanel/apps/')) fail('Working directory tidak valid.'); return v; }
 function safeEntry(raw) { const v = String(raw || ''); if (!/^[a-zA-Z0-9._/-]{1,120}$/.test(v) || v.startsWith('/') || v.includes('..')) fail('Entry file tidak valid.'); return v; }
 function writeAtomic(file, content, mode = 0o640) { mkdir(path.dirname(file)); const tmp = `${file}.${process.pid}.tmp`; fs.writeFileSync(tmp, content, { mode }); fs.renameSync(tmp, file); }
 function loadAgent() { try { return JSON.parse(fs.readFileSync(path.join(ETC, 'agent.json'), 'utf8')); } catch { return { nameservers: [], serverIPv4: '', secondaryIPs: [] }; } }
@@ -120,7 +120,7 @@ function nginxHttpConfig(domain, port, tlsMode) {
 }
 
 function nginxLocalTlsConfig(domain, port, certDir = `/etc/letsencrypt/live/${domain}`) {
-  return `server {\n  listen 80;\n  listen [::]:80;\n  server_name ${domain};\n\n${acmeLocation()}\n\n  location / {\n    return 301 https://$host$request_uri;\n  }\n}\n\nserver {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${domain};\n\n  ssl_certificate ${certDir}/fullchain.pem;\n  ssl_certificate_key ${certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.0.0 TLSv1.3;\n\n  client_max_body_size 25m;\n\n${proxyLocation(port, '$scheme')}\n}\n`;
+  return `server {\n  listen 80;\n  listen [::]:80;\n  server_name ${domain};\n\n${acmeLocation()}\n\n  location / {\n    return 301 https://$host$request_uri;\n  }\n}\n\nserver {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${domain};\n\n  ssl_certificate ${certDir}/fullchain.pem;\n  ssl_certificate_key ${certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.2 TLSv1.3;\n\n  client_max_body_size 25m;\n\n${proxyLocation(port, '$scheme')}\n}\n`;
 }
 
 function detectPhpSocket() {
@@ -138,7 +138,7 @@ function phpMyAdminHttpConfig(domain) {
 
 function phpMyAdminTlsConfig(domain, certDir = `/etc/letsencrypt/live/${domain}`) {
   const socket = detectPhpSocket();
-  return `server {\n  listen 80;\n  listen [::]:80;\n  server_name ${domain};\n\n  location ^~ /.well-known/acme-challenge/ {\n    auth_basic off;\n    root /var/www/letsencrypt;\n    default_type text/plain;\n    try_files $uri =404;\n  }\n  location / { return 301 https://$host$request_uri; }\n}\n\nserver {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${domain};\n  root /usr/share/phpmyadmin;\n  index index.php;\n  client_max_body_size 32m;\n\n  ssl_certificate ${certDir}/fullchain.pem;\n  ssl_certificate_key ${certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.0.0 TLSv1.3;\n\n  auth_basic "Database Admin";\n  auth_basic_user_file ${PMA_HTPASSWD};\n\n  location / { try_files $uri $uri/ /index.php?$args; }\n  location ~ \\.php$ {\n    include fastcgi_params;\n    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n    fastcgi_pass unix:${socket};\n  }\n  location ~* ^/(setup|libraries|templates)/ { deny all; }\n  location ~ /\\. { deny all; }\n}\n`;
+  return `server {\n  listen 80;\n  listen [::]:80;\n  server_name ${domain};\n\n  location ^~ /.well-known/acme-challenge/ {\n    auth_basic off;\n    root /var/www/letsencrypt;\n    default_type text/plain;\n    try_files $uri =404;\n  }\n  location / { return 301 https://$host$request_uri; }\n}\n\nserver {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${domain};\n  root /usr/share/phpmyadmin;\n  index index.php;\n  client_max_body_size 32m;\n\n  ssl_certificate ${certDir}/fullchain.pem;\n  ssl_certificate_key ${certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.2 TLSv1.3;\n\n  auth_basic "Database Admin";\n  auth_basic_user_file ${PMA_HTPASSWD};\n\n  location / { try_files $uri $uri/ /index.php?$args; }\n  location ~ \\.php$ {\n    include fastcgi_params;\n    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n    fastcgi_pass unix:${socket};\n  }\n  location ~* ^/(setup|libraries|templates)/ { deny all; }\n  location ~ /\\. { deny all; }\n}\n`;
 }
 
 
@@ -246,7 +246,7 @@ function nginxAdvancedConfig(settings,tlsMode){
   blocks.push(`server {\n  listen 80;\n  listen [::]:80;\n  server_name ${httpHosts.join(' ')};\n  client_max_body_size ${settings.uploadLimitMb}m;\n${acmeLocation()}${aliasCheck}${schemeRedirect}${httpProxy}\n}`);
   if(tlsMode==='local'&&canonicalCert){
     const tlsAliases=aliases.filter(h=>certCoversHost(canonicalCert,h)),tlsHosts=[canonical,...tlsAliases].filter((x,i,a)=>a.indexOf(x)===i); const tlsAliasCheck=settings.canonicalMode!=='none'&&tlsAliases.length?`\n  if ($host != ${canonical}) { return 301 https://${canonical}$request_uri; }`:'';
-    blocks.push(`server {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${tlsHosts.join(' ')};\n  ssl_certificate ${canonicalCert.certDir}/fullchain.pem;\n  ssl_certificate_key ${canonicalCert.certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.0.0 TLSv1.3;\n  client_max_body_size ${settings.uploadLimitMb}m;${tlsAliasCheck}\n${advancedProxyLocation(settings,'$scheme')}\n}`);
+    blocks.push(`server {\n  listen 443 ssl http2;\n  listen [::]:443 ssl http2;\n  server_name ${tlsHosts.join(' ')};\n  ssl_certificate ${canonicalCert.certDir}/fullchain.pem;\n  ssl_certificate_key ${canonicalCert.certDir}/privkey.pem;\n  ssl_session_timeout 1d;\n  ssl_session_cache shared:SSL:10m;\n  ssl_protocols TLSv1.2 TLSv1.3;\n  client_max_body_size ${settings.uploadLimitMb}m;${tlsAliasCheck}\n${advancedProxyLocation(settings,'$scheme')}\n}`);
   }
   return{content:blocks.join('\n\n')+'\n',https:Boolean(canonicalCert),certificateName:canonicalCert?.name||null,canonical};
 }
@@ -938,6 +938,10 @@ function writeNginxWithRollback(file, content) {
 
 function certbotIssue(domain, email, port, dryRun = false) {
   domain = safeDomain(domain); port = safePort(port);
+  if (!dryRun && findCertificateForDomain(domain)) {
+    activateExistingCertificate(domain, port);
+    return;
+  }
   certbotAcquire(domain, email, dryRun);
   if (dryRun) {
     console.log(JSON.stringify({ ok: true, domain, staging: true, message: 'ACME staging/dry-run berhasil; sertifikat production tidak diubah.' }));

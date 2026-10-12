@@ -57,7 +57,7 @@ function dnsValue(type, value) {
 
 function workingDir(value) {
   const raw = String(value || '').trim();
-  if (!/^\/srv\/apps\/[a-zA-Z0-9._/-]+$/.test(raw) || raw.includes('..')) throw new Error('Folder aplikasi wajib berupa path aman di bawah /nusantara-hostpanel/apps/.');
+  if (!/^\/nusantara-hostpanel\/apps\/[a-zA-Z0-9._/-]+$/.test(raw) || raw.includes('..')) throw new Error('Folder aplikasi wajib berupa path aman di bawah /nusantara-hostpanel/apps/.');
   const v = path.posix.normalize(raw);
   if (!v.startsWith('/nusantara-hostpanel/apps/')) throw new Error('Folder aplikasi tidak valid.');
   return v;

@@ -11,7 +11,7 @@
   <% } %>
   <p class="mt-2 text-xs text-slate-500">Node app tetap hanya di localhost. Jangan expose port aplikasi langsung ke Internet.</p>
   <% if (tlsMode === 'local') { %>
-    <p class="mt-2 text-xs text-slate-400">Urutan: DNS + HTTP publik → <strong>Tes ACME</strong> → opsional <strong>Tes Staging</strong> → <strong>Pasang SSL</strong> → HTTPS publik. Jika CA memberi rate-limit, panel menahan retry production sampai cooldown selesai.</p>
+    <p class="mt-2 text-xs text-slate-400">Sertifikat exact/wildcard yang tersedia otomatis dipakai saat menambah domain. Tombol <strong>Pasang / Gunakan SSL</strong> juga memakainya tanpa penerbitan baru. Jika belum ada sertifikat: DNS + HTTP publik → <strong>Tes ACME</strong> → opsional <strong>Tes Staging</strong> → penerbitan SSL. Cooldown berlaku untuk request baru ke CA.</p>
   <% } %>
 </section>
 <% } %>
@@ -52,7 +52,7 @@
             <form method="post" action="/domains/<%= d.id %>/ssl-test"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Tes ACME</button></form>
             <form method="post" action="/domains/<%= d.id %>/ssl-staging"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" type="submit">Tes Staging</button></form>
             <form method="post" action="/domains/<%= d.id %>/ssl-sync"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-secondary" title="Gunakan setelah menerbitkan certificate via SSH" type="submit">Sinkronkan SSL Manual</button></form>
-            <form method="post" action="/domains/<%= d.id %>/ssl"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-primary" <%= cooldown ? 'disabled' : '' %> data-confirm="Pastikan DNS dan HTTP 80 → Internal 80 sudah aktif. Request production Let’s Encrypt dapat terkena rate-limit. Lanjut?" type="submit"><%= cooldown ? 'Menunggu Cooldown' : 'Pasang SSL' %></button></form>
+            <form method="post" action="/domains/<%= d.id %>/ssl"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-primary" data-confirm="Gunakan sertifikat exact/wildcard yang tersedia. Jika belum ada, penerbitan baru memerlukan DNS dan port HTTP 80 yang siap serta tunduk pada cooldown. Lanjut?" type="submit">Pasang / Gunakan SSL</button></form>
           <% } %>
           <form method="post" action="/domains/<%= d.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn-danger" data-confirm="Hapus virtual host Nginx ini?" type="submit">Hapus</button></form>
         </div>

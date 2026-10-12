@@ -1,4 +1,8 @@
 (() => {
+  // Bind once even if a layout accidentally includes the bundle twice.
+  if (window.__hostpanelAppInitialized) return;
+  window.__hostpanelAppInitialized = true;
+(() => {
   const body = document.body;
   const sidebar = document.querySelector('[data-sidebar]');
   const backdrop = document.querySelector('[data-sidebar-backdrop]');
@@ -143,4 +147,6 @@
     slug.value = value;
     if (dir) dir.value = value ? `/nusantara-hostpanel/apps/${value}` : '';
   });
+})();
+
 })();
