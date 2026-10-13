@@ -11,17 +11,18 @@
     "start": "node src/app.js",
     "css:build": "npx @tailwindcss/cli -i ./public/css/input.css -o ./public/css/app.css --minify",
     "check": "node scripts/check-architecture.js",
-    "test": "npm run check && npm run check:assets && npm run check:migrations && npm run test:security && npm run test:rbac && npm run test:integrations && npm run test:admin",
+    "test": "npm run check && npm run check:assets && npm run check:migrations && npm run test:security && npm run test:rbac && npm run test:integrations && npm run test:admin && npm run test:runtime",
     "test:security": "node test/security-basics.js",
     "release:check": "bash scripts/release-check.sh",
     "check:assets": "node scripts/check-assets.js",
     "check:migrations": "node scripts/check-migrations.js",
     "smoke:local": "node scripts/smoke-local.js",
     "docs:build": "bash scripts/docs-build.sh",
-    "quality": "npm run check && npm run test:security && npm run test:rbac && npm run test:integrations && npm run check:assets && npm run check:migrations && npm run test:admin",
+    "quality": "npm run check && npm run test:security && npm run test:rbac && npm run test:integrations && npm run check:assets && npm run check:migrations && npm run test:admin && npm run test:runtime",
     "test:rbac": "node test/rbac-basics.js",
     "test:integrations": "node test/integrations-basics.js",
-    "test:admin": "node test/admin-regressions.js"
+    "test:admin": "node test/admin-regressions.js",
+    "test:runtime": "node test/runtime-port.js"
   },
   "engines": {
     "node": ">=22 <25"
